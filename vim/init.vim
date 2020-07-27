@@ -32,12 +32,22 @@ call plug#begin('~/.vim/plugged')
 
   " Colorschema. Using my fork until they merge the PR to improve Elixir sintax.
   Plug 'feliperenan/nord-vim'
+  Plug 'hauleth/blame.vim'
+  Plug 'morhetz/gruvbox'
 
   " Display Indentation line
   Plug 'Yggdroot/indentLine'
 
   " Add syntax for programming languages on demand.
   Plug 'sheerun/vim-polyglot'
+
+  " Vim linter
+  Plug 'dense-analysis/ale'
+
+
+  " Elixir LS
+  Plug 'neoclide/coc.nvim', { 'branch': 'release' }
+  Plug 'amiralies/coc-elixir', {'do': 'yarn install && yarn prepack'}
 
   " Run tests from vim.
   Plug 'janko-m/vim-test'
@@ -60,15 +70,6 @@ call plug#begin('~/.vim/plugged')
   " Easily replace commas, quotes, parentheses or edit words surround by it.
   Plug 'tpope/vim-surround'
 
-  " Add some Elixir features
-  Plug 'slashmili/alchemist.vim'
-
-  " Smart auto-complete and works nice with alchemist
-  Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
-
-  " Helpfull for formating Elixir code
-  Plug 'mhinz/vim-mix-format'
-
   " Asynchronous linting and make framework for Neovim/Vim
   Plug 'neomake/neomake'
 
@@ -89,9 +90,6 @@ call plug#begin('~/.vim/plugged')
   " Awesome vim airline with several options and themes.
   Plug 'vim-airline/vim-airline'
   Plug 'vim-airline/vim-airline-themes'
-
-  " TODO: check ift's needed since I use vim-polyglot
-  " Plug 'slim-template/vim-slim'
 
   " Creates or run commands from VIM on existing TMUX panes.
   Plug 'benmills/vimux'
@@ -117,6 +115,9 @@ call plug#begin('~/.vim/plugged')
 
   " Quick search and replace for Vim
   Plug 'hauleth/sad.vim'
+
+  " dadbod.vim: Modern database interface for Vim
+  Plug 'tpope/vim-dadbod'
 call plug#end()
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -166,6 +167,11 @@ command! W execute 'w !sudo tee % > /dev/null' <bar> edit!
 
 " Use <leader>bh to open startify (Home)
 nmap <leader>bh :Startify<cr>
+
+nmap <silent> gd <Plug>(coc-definition)
+nmap <silent> gr <Plug>(coc-references)
+nnoremap <silent> <leader>co  :<C-u>CocList outline<CR>
+
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => VIM user interface
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -255,7 +261,7 @@ let g:startify_change_to_vcs_root = 1
 set termguicolors
 syntax enable
 colorscheme nord
-set background=dark
+" set background=dark
 
 " Set extra options when running in GUI mode
 if has("gui_running")
@@ -278,7 +284,8 @@ autocmd BufNewFile,BufRead *.slim setlocal filetype=slim
 autocmd BufNewFile,BufRead *.lime setlocal filetype=slim
 
 " Disable Syntax Concealing in markdown
-set conceallevel=2
+set conceallevel=0
+let g:vim_markdown_conceal = 0
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Files, backups and undo
@@ -423,6 +430,12 @@ map <leader>sp [s
 map <leader>sa zg
 map <leader>s? z=
 
+" Create a vertical split
+nmap <leader>l :vsplit<CR><C-w>l
+
+" Create a horizontal split
+nmap <leader>j :split<CR><C-w>j
+
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Fuzzy Finder
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -532,8 +545,18 @@ nnoremap <leader>yl :let @+=expand('%:p') . ':' . line(".")<CR>
 vnoremap J :m '>+1<CR>gv=gv
 vnoremap K :m '<-2<CR>gv=gv
 
-" Initializes deocomplete on VIM start
-let g:deoplete#enable_at_startup = 1
+" Ale setup
+let g:ale_fixers  = {'elixir': ['mix_format']}
+let g:ale_linters = {'elixir': ['elixir-ls']}
+
+" Set this variable to 1 to fix files when you save them.
+let g:ale_fix_on_save = 1
+
+let b:ale_elixir_elixir_ls_config = {
+\   'elixirLS': {
+\     'dialyzerEnabled': v:false,
+\   },
+\}
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Linter setup
@@ -551,6 +574,7 @@ function! HasPaste()
   endif
   return ''
 endfunction
+
 
 " Don't close window, when deleting a buffer
 command! Bclose call <SID>BufcloseCloseIt()
